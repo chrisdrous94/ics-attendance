@@ -2,743 +2,911 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E7C86">
+<title>ICAN Attendance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<title>ICAN Attendance System</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --primary: #0E7C86;
-    --in-color: #1B8A4B;
-    --in-bg: #E8F5E9;
-    --out-color: #666666;
-    --out-bg: #F5F5F5;
-    --bg: #F8F9FA;
-    --surface: #FFFFFF;
-    --text: #1A1A1A;
-    --text-muted: #666666;
-    --border: #EFEFEF;
-    --error: #D32F2F;
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
+/* ============ Material You 3 tokens — ICAN teal ============ */
+:root{
+  --primary:#0E7C86; --on-primary:#FFFFFF;
+  --primary-container:#C2EBEF; --on-primary-container:#00363B;
+  --secondary-container:#DCE9EA; --on-secondary-container:#101F21;
+  --success:#1B6E43; --success-container:#C9F0D6; --on-success-container:#00391C;
+  --warn:#8A5500; --warn-container:#FFDDB0; --on-warn-container:#2C1700;
+  --error:#BA1A1A; --error-container:#FFDAD6; --on-error-container:#410002;
+  --surface:#F6FAFA; --surface-1:#EFF5F5; --surface-2:#EAF1F1; --surface-3:#E3EDED;
+  --on-surface:#171D1E; --on-surface-var:#3F484A; --outline:#6F797B; --outline-var:#D6E0E1;
+  --shadow-1:0 1px 2px rgba(0,26,29,.10),0 1px 3px rgba(0,26,29,.06);
+  --shadow-2:0 2px 6px rgba(0,26,29,.12),0 4px 14px rgba(0,26,29,.08);
+  --r-s:12px; --r-m:18px; --r-l:26px; --r-full:999px;
+  --font-ui:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-display:Sora,var(--font-ui);
+  --nav-h:74px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  font-family:var(--font-ui); background:var(--surface); color:var(--on-surface);
+  font-size:15px; line-height:1.45; -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:15px;color:var(--on-surface)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
+/* ============ app shell ============ */
+.app{min-height:100dvh;display:flex;flex-direction:column}
+.topbar{
+  position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;
+  padding:12px 18px;padding-top:calc(12px + env(safe-area-inset-top));
+  background:color-mix(in srgb,var(--surface) 88%,transparent);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--outline-var);
+}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand img{height:40px;width:auto;display:block}
+.brand-mark{
+  width:40px;height:40px;border-radius:12px;background:var(--primary);color:var(--on-primary);
+  display:none;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;
+}
+.brand h1{font-family:var(--font-display);font-size:18px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand .sub{font-size:12px;color:var(--on-surface-var);margin-top:1px}
+.topbar .spacer{flex:1}
 
-  .wrap {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    height: 100dvh;
-  }
+.sync-pill{
+  display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;
+  padding:7px 13px;border-radius:var(--r-full);background:var(--surface-2);color:var(--on-surface-var);
+}
+.sync-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--outline)}
+.sync-pill.online .dot{background:var(--success)}
+.sync-pill.syncing .dot{background:var(--warn);animation:blink .7s infinite alternate}
+.sync-pill.offline{background:var(--warn-container);color:var(--on-warn-container)}
+@keyframes blink{from{opacity:.35}to{opacity:1}}
 
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 20px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    box-shadow: var(--shadow);
-    flex-shrink: 0;
-    gap: 20px;
-  }
+/* desktop segmented nav */
+.seg-nav{display:none;gap:4px;background:var(--surface-2);border-radius:var(--r-full);padding:4px}
+.seg-nav button{
+  padding:9px 18px;border-radius:var(--r-full);font-size:13.5px;font-weight:600;color:var(--on-surface-var);
+  transition:background .15s,color .15s;
+}
+.seg-nav button.active{background:var(--primary-container);color:var(--on-primary-container)}
+.seg-nav button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex: 1;
-  }
+/* mobile bottom nav */
+.bottom-nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;height:var(--nav-h);
+  display:flex;background:var(--surface-2);border-top:1px solid var(--outline-var);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--on-surface-var)}
+.bottom-nav .ico{
+  width:56px;height:30px;border-radius:var(--r-full);display:flex;align-items:center;justify-content:center;
+  font-size:17px;transition:background .18s;
+}
+.bottom-nav button.active{color:var(--on-primary-container)}
+.bottom-nav button.active .ico{background:var(--primary-container)}
+.bottom-nav button:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
 
-  .logo {
-    height: 52px;
-    width: auto;
-  }
+main{flex:1;width:100%;max-width:1120px;margin:0 auto;padding:18px 16px calc(var(--nav-h) + 26px)}
+.view{display:none}.view.active{display:block;animation:vin .22s ease}
+@keyframes vin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
-  .header-title h1 {
-    font-size: 26px;
-    font-weight: 700;
-    margin: 0;
-  }
+@media(min-width:900px){
+  .seg-nav{display:flex}
+  .bottom-nav{display:none}
+  main{padding-bottom:40px}
+  .brand h1{font-size:20px}
+}
 
-  .header-title .sub {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
+/* ============ kiosk ============ */
+.clock-strip{
+  display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+  background:var(--primary-container);color:var(--on-primary-container);
+  border-radius:var(--r-l);padding:18px 24px;margin-bottom:16px;
+}
+.clock-strip .time{font-family:var(--font-display);font-weight:700;font-size:clamp(30px,6vw,44px);letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.clock-strip .date{font-size:14px;font-weight:600;opacity:.85}
+.clock-strip .counts{margin-left:auto;display:flex;gap:16px;font-size:13px;font-weight:600}
+.clock-strip .counts b{font-family:var(--font-display);font-size:19px;display:block}
 
-  .header-right {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-  }
+.searchbar{position:relative;margin-bottom:16px}
+.searchbar input{
+  width:100%;padding:15px 20px 15px 48px;border:none;border-radius:var(--r-full);
+  background:var(--surface-2);font-size:16px;
+}
+.searchbar input:focus{outline:2px solid var(--primary);background:var(--surface-1)}
+.searchbar::before{content:"⌕";position:absolute;left:19px;top:50%;transform:translateY(-54%);font-size:21px;color:var(--on-surface-var)}
 
-  .sync-indicator {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    padding: 8px 14px;
-    background: var(--out-bg);
-    border-radius: 20px;
-  }
+.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
+@media(min-width:900px){.staff-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}}
 
-  .sync-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #999;
-    animation: pulse 2s infinite;
-  }
+.staff-card{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  min-height:150px;padding:18px 12px;border-radius:var(--r-m);
+  background:var(--surface-1);border:1.5px solid var(--outline-var);
+  transition:transform .1s,background .15s,border-color .15s;text-align:center;
+}
+.staff-card:active{transform:scale(.965)}
+.staff-card:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.staff-card .avatar{
+  width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:var(--secondary-container);color:var(--on-secondary-container);
+  font-family:var(--font-display);font-weight:600;font-size:16px;
+}
+.staff-card .nm{font-weight:600;font-size:15px;line-height:1.25;word-break:break-word}
+.staff-card .st{
+  display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+  padding:5px 12px;border-radius:var(--r-full);background:var(--surface-3);color:var(--on-surface-var);
+  font-variant-numeric:tabular-nums;
+}
+.staff-card .st::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--outline)}
+.staff-card.in{background:var(--success-container);border-color:transparent}
+.staff-card.in .avatar{background:var(--success);color:#fff}
+.staff-card.in .nm{color:var(--on-success-container)}
+.staff-card.in .st{background:rgba(255,255,255,.55);color:var(--on-success-container)}
+.staff-card.in .st::before{background:var(--success)}
+.staff-card.pending::after{
+  content:"⇅";position:absolute;top:8px;right:10px;font-size:12px;color:var(--warn);
+}
 
-  .sync-dot.online { background: var(--in-color); animation: none; }
-  .sync-dot.syncing { background: #FFA500; animation: pulse 0.6s infinite; }
+.empty{
+  grid-column:1/-1;text-align:center;color:var(--on-surface-var);padding:60px 20px;font-size:15px;
+}
+.empty b{display:block;font-family:var(--font-display);font-size:17px;color:var(--on-surface);margin-bottom:6px}
 
-  @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+/* ============ cards & common ============ */
+.card{background:var(--surface-1);border-radius:var(--r-l);padding:20px 22px;box-shadow:var(--shadow-1)}
+.card + .card{margin-top:14px}
+.card h2{font-family:var(--font-display);font-size:16px;font-weight:600;margin:0 0 4px}
+.card .hint{font-size:13px;color:var(--on-surface-var);margin:0 0 14px}
 
-  .btn {
-    padding: 10px 16px;
-    background: var(--out-bg);
-    color: var(--text);
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-  }
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--on-surface-var);margin-bottom:6px}
+.field input,.field select{
+  width:100%;padding:13px 15px;border:1.5px solid var(--outline-var);border-radius:var(--r-s);
+  background:var(--surface);font-size:15px;
+}
+.field input:focus,.field select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 16%,transparent)}
 
-  .btn.active {
-    background: var(--primary);
-    color: white;
-  }
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 22px;border-radius:var(--r-full);font-size:14px;font-weight:600;
+  transition:filter .15s,transform .1s;
+}
+.btn:active{transform:scale(.97)}
+.btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.btn-filled{background:var(--primary);color:var(--on-primary)}
+.btn-filled:hover{filter:brightness(1.08)}
+.btn-tonal{background:var(--secondary-container);color:var(--on-secondary-container)}
+.btn-danger{background:var(--error-container);color:var(--on-error-container)}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap}
 
-  .search-section {
-    padding: 14px 20px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
+.note{margin-top:12px;padding:12px 14px;border-radius:var(--r-s);font-size:13.5px;display:none}
+.note.show{display:block}
+.note.ok{background:var(--success-container);color:var(--on-success-container)}
+.note.err{background:var(--error-container);color:var(--on-error-container)}
+.note.info{background:var(--surface-3);color:var(--on-surface-var)}
 
-  .search {
-    width: 100%;
-    padding: 14px 18px;
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    font-size: 16px;
-  }
+/* ============ dashboard ============ */
+.dash-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.dash-tools input[type=date]{
+  padding:11px 14px;border:1.5px solid var(--outline-var);border-radius:var(--r-s);background:var(--surface-1);
+}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+@media(min-width:720px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{border-radius:var(--r-m);padding:16px 18px;background:var(--surface-1)}
+.stat .lbl{font-size:12px;font-weight:600;color:var(--on-surface-var);text-transform:uppercase;letter-spacing:.05em}
+.stat .val{font-family:var(--font-display);font-size:30px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.stat.s-present{background:var(--success-container)}.stat.s-present .val{color:var(--on-success-container)}
+.stat.s-late{background:var(--warn-container)}.stat.s-late .val{color:var(--on-warn-container)}
+.stat.s-total{background:var(--primary-container)}.stat.s-total .val{color:var(--on-primary-container)}
 
-  .search:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.1);
-  }
+.tbl-wrap{overflow-x:auto;border-radius:var(--r-m);background:var(--surface-1)}
+table{width:100%;border-collapse:collapse;min-width:560px}
+th{font-size:12px;font-weight:600;color:var(--on-surface-var);text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:13px 16px;border-bottom:1.5px solid var(--outline-var)}
+td{padding:12px 16px;border-bottom:1px solid var(--outline-var);font-size:14px;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:var(--r-full);font-size:12.5px;font-weight:600}
+.chip.in{background:var(--success-container);color:var(--on-success-container)}
+.chip.out{background:var(--surface-3);color:var(--on-surface-var)}
+.chip.late{background:var(--warn-container);color:var(--on-warn-container)}
+.icon-btn{
+  width:36px;height:36px;border-radius:var(--r-full);display:inline-flex;align-items:center;justify-content:center;
+  font-size:15px;color:var(--on-surface-var);transition:background .15s;
+}
+.icon-btn:hover{background:var(--surface-3)}
+.icon-btn:focus-visible{outline:2px solid var(--primary)}
 
-  .grid {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-    align-content: start;
-  }
+/* ============ dialogs / scrim ============ */
+.scrim{
+  position:fixed;inset:0;z-index:60;background:rgba(0,26,29,.42);
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.scrim.show{display:flex;animation:fin .18s ease}
+@keyframes fin{from{opacity:0}to{opacity:1}}
+.dialog{
+  width:100%;max-width:400px;background:var(--surface);border-radius:28px;
+  padding:26px;box-shadow:var(--shadow-2);animation:din .2s ease;
+}
+@keyframes din{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+.dialog h3{font-family:var(--font-display);font-size:19px;font-weight:600;margin:0 0 6px}
+.dialog p{font-size:13.5px;color:var(--on-surface-var);margin:0 0 18px}
+.dialog .btn-row{justify-content:flex-end;margin-top:20px}
 
-  @media (max-width: 600px) {
-    .grid { grid-template-columns: 1fr; gap: 10px; padding: 10px; }
-  }
+.pin-input{
+  width:100%;padding:15px;text-align:center;font-size:26px;letter-spacing:14px;font-weight:700;
+  border:1.5px solid var(--outline-var);border-radius:var(--r-s);background:var(--surface-1);
+  font-variant-numeric:tabular-nums;
+}
+.pin-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 16%,transparent)}
+.pin-err{color:var(--error);font-size:13px;font-weight:600;margin-top:10px;min-height:18px;text-align:center}
 
-  @media (min-width: 1025px) {
-    .grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  }
-
-  .staff-btn {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
-    padding: 24px 14px;
-    background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: 14px;
-    cursor: pointer;
-    min-height: 160px;
-    font-family: inherit;
-  }
-
-  .staff-btn:active { transform: scale(0.96); }
-  .staff-btn.in { background: var(--in-bg); border-color: var(--in-color); }
-  .staff-btn.in .name { color: var(--in-color); }
-
-  .name {
-    font-size: 18px;
-    font-weight: 700;
-    text-align: center;
-  }
-
-  .status-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    background: var(--out-bg);
-    color: var(--out-color);
-  }
-
-  .staff-btn.in .status-badge {
-    background: rgba(27, 138, 75, 0.15);
-    color: var(--in-color);
-  }
-
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-
-  .empty {
-    grid-column: 1 / -1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 250px;
-    color: var(--text-muted);
-    text-align: center;
-    font-size: 17px;
-  }
-
-  .dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    padding: 20px;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: var(--shadow);
-  }
-
-  .card h3 {
-    margin: 0 0 10px 0;
-    font-size: 16px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-  }
-
-  .card .value {
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--primary);
-  }
-
-  .table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-  }
-
-  .table th {
-    background: var(--out-bg);
-    padding: 12px;
-    text-align: left;
-    font-weight: 600;
-    border-bottom: 2px solid var(--border);
-  }
-
-  .table td {
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .confirm {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(120px);
-    opacity: 0;
-    pointer-events: none;
-    z-index: 100;
-    background: var(--in-color);
-    color: white;
-    padding: 16px 24px;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 600;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s;
-  }
-
-  .confirm.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  .hidden { display: none !important; }
-
-  .settings-content {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-
-  .form-field {
-    margin-bottom: 20px;
-  }
-
-  .form-field label {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
-
-  .form-field input {
-    width: 100%;
-    padding: 12px;
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    font-size: 16px;
-  }
-
-  .form-field input:focus {
-    outline: none;
-    border-color: var(--primary);
-  }
-
-  .btn-primary {
-    padding: 12px 20px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .status-box {
-    padding: 12px;
-    background: var(--out-bg);
-    border-radius: 8px;
-    margin-top: 10px;
-    font-size: 14px;
-  }
+/* ============ snackbar ============ */
+.snackbar{
+  position:fixed;left:50%;bottom:calc(var(--nav-h) + 18px);z-index:80;
+  transform:translate(-50%,140%);transition:transform .28s cubic-bezier(.2,.8,.3,1.1);
+  display:flex;align-items:center;gap:10px;max-width:min(92vw,460px);
+  background:#232B2C;color:#EDF3F3;padding:14px 22px;border-radius:var(--r-m);
+  font-size:14.5px;font-weight:600;box-shadow:var(--shadow-2);
+}
+.snackbar.show{transform:translate(-50%,0)}
+.snackbar.good{background:var(--success);color:#fff}
+.snackbar.bad{background:var(--error);color:#fff}
+@media(min-width:900px){.snackbar{bottom:26px}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="header-left">
-      <img src="https://icanskill.com/_ipx/_/img/logo/ican.svg" alt="ICAN" class="logo" onerror="this.style.display='none'">
-      <div class="header-title">
-        <h1 id="headerTitle">Attendance</h1>
-        <div class="sub">Tap to sign in / out</div>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <img src="https://icanskill.com/_ipx/_/img/logo/ican.svg" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="brand-mark" aria-hidden="true">iC</div>
+      <div>
+        <h1 id="brandTitle">ICAN Attendance</h1>
+        <div class="sub" id="brandSub">Staff sign-in kiosk</div>
       </div>
     </div>
-    <div class="header-right">
-      <div class="sync-indicator" id="syncIndicator">
-        <span class="sync-dot" id="syncDot"></span>
-        <span id="syncText">Loading…</span>
-      </div>
-      <div style="display: flex; gap: 8px;">
-        <button class="btn active" onclick="switchView('kiosk')">📱 Kiosk</button>
-        <button class="btn" onclick="switchView('dashboard')">📊 Dashboard</button>
-        <button class="btn" onclick="switchView('settings')">⚙️ Settings</button>
-      </div>
-    </div>
+    <div class="spacer"></div>
+    <nav class="seg-nav" aria-label="Sections">
+      <button data-nav="kiosk" class="active">Kiosk</button>
+      <button data-nav="dashboard">Dashboard</button>
+      <button data-nav="settings">Settings</button>
+    </nav>
+    <div class="sync-pill" id="syncPill"><span class="dot"></span><span id="syncTxt">Starting…</span></div>
   </header>
 
-  <!-- KIOSK VIEW -->
-  <div id="kioskView">
-    <div class="search-section">
-      <input id="search" class="search" type="text" placeholder="Search name…">
-    </div>
-    <div class="grid" id="grid">
-      <div class="empty">📱 Loading…</div>
-    </div>
-  </div>
+  <main>
+    <!-- ================= KIOSK ================= -->
+    <section class="view active" id="view-kiosk">
+      <div class="clock-strip">
+        <span class="time" id="clockTime">—:—</span>
+        <span class="date" id="clockDate"></span>
+        <span class="counts">
+          <span><b id="cntIn">0</b>signed in</span>
+          <span><b id="cntOut">0</b>signed out</span>
+        </span>
+      </div>
+      <div class="searchbar">
+        <input id="search" type="search" placeholder="Search your name" autocomplete="off" aria-label="Search staff">
+      </div>
+      <div class="staff-grid" id="staffGrid">
+        <div class="empty"><b>Connecting…</b>Loading staff from your sheet</div>
+      </div>
+    </section>
 
-  <!-- DASHBOARD VIEW -->
-  <div id="dashboardView" class="hidden" style="flex: 1; overflow-y: auto;">
-    <div class="dashboard-grid" id="dashboardContent">
-      <div class="empty">📊 Loading…</div>
-    </div>
-  </div>
+    <!-- ================= DASHBOARD ================= -->
+    <section class="view" id="view-dashboard">
+      <div class="dash-tools">
+        <input type="date" id="dashDate" aria-label="Dashboard date">
+        <button class="btn btn-tonal" id="dashRefresh">↻ Refresh</button>
+        <span style="flex:1"></span>
+        <button class="btn btn-tonal" id="dashLock">Lock 🔒</button>
+      </div>
+      <div class="stats">
+        <div class="stat s-present"><div class="lbl">Present now</div><div class="val" id="stPresent">–</div></div>
+        <div class="stat"><div class="lbl">Signed out</div><div class="val" id="stOut">–</div></div>
+        <div class="stat s-late"><div class="lbl">Late arrivals</div><div class="val" id="stLate">–</div></div>
+        <div class="stat s-total"><div class="lbl">Total punches</div><div class="val" id="stTotal">–</div></div>
+      </div>
+      <div class="tbl-wrap">
+        <table aria-label="Attendance log">
+          <thead><tr><th>Staff</th><th>Action</th><th>Time</th><th>Source</th><th style="width:96px">Edit</th></tr></thead>
+          <tbody id="dashRows"><tr><td colspan="5" style="text-align:center;color:var(--on-surface-var);padding:34px">No data yet</td></tr></tbody>
+        </table>
+      </div>
+    </section>
 
-  <!-- SETTINGS VIEW -->
-  <div id="settingsView" class="hidden" style="flex: 1; overflow-y: auto;">
-    <div class="settings-content">
-      <h2>⚙️ Settings</h2>
-      
-      <div class="card" style="margin-bottom: 20px;">
-        <h3>Google Apps Script URL</h3>
-        <p style="color: var(--text-muted); font-size: 14px;">Paste your deployed Google Apps Script URL</p>
-        <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/d/..." style="width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; margin-bottom: 12px;">
-        <button class="btn-primary" onclick="saveScriptUrl()">Save URL</button>
-        <div class="status-box" id="urlStatus"></div>
+    <!-- ================= SETTINGS ================= -->
+    <section class="view" id="view-settings">
+      <div class="card">
+        <h2>Connection</h2>
+        <p class="hint">Paste the Web App URL from Apps Script (Deploy → the link ending in <b>/exec</b>).</p>
+        <div class="field">
+          <label for="scriptUrl">Apps Script deployment URL</label>
+          <input id="scriptUrl" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-filled" id="btnSaveUrl">Save &amp; test connection</button>
+        </div>
+        <div class="note" id="connNote"></div>
       </div>
 
       <div class="card">
-        <h3>ℹ️ Instructions</h3>
-        <p style="font-size: 14px; color: var(--text-muted); margin: 0;">
-          1. Deploy Code-GitHub-CORS-FIXED.gs in Google Apps Script<br>
-          2. Copy the deployment URL<br>
-          3. Paste it above<br>
-          4. Click Save
-        </p>
+        <h2>Kiosk &amp; rules</h2>
+        <p class="hint">Saved to the server — applies on every device. Requires the admin PIN.</p>
+        <div class="field"><label for="setTitle">Kiosk title</label><input id="setTitle" placeholder="ICAN Attendance"></div>
+        <div class="field"><label for="setSubtitle">Kiosk subtitle</label><input id="setSubtitle" placeholder="Tap your name to sign in or out"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="field"><label for="setLate">Late after</label><input id="setLate" type="time" step="60"></div>
+          <div class="field"><label for="setEarly">Early leave before</label><input id="setEarly" type="time" step="60"></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-filled" id="btnSaveSettings">Save options</button></div>
+        <div class="note" id="setNote"></div>
       </div>
+
+      <div class="card">
+        <h2>This device</h2>
+        <p class="hint">Punches are stored on this device first, then synced. Clearing removes only unsent local copies — the sheet keeps everything already synced.</p>
+        <div class="btn-row">
+          <button class="btn btn-tonal" id="btnForceSync">Sync now</button>
+          <button class="btn btn-danger" id="btnClear">Clear local data</button>
+        </div>
+        <div class="note" id="devNote"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Sections">
+    <button data-nav="kiosk" class="active"><span class="ico">👋</span>Kiosk</button>
+    <button data-nav="dashboard"><span class="ico">📊</span>Dashboard</button>
+    <button data-nav="settings"><span class="ico">⚙️</span>Settings</button>
+  </nav>
+</div>
+
+<!-- PIN dialog -->
+<div class="scrim" id="pinScrim" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+  <div class="dialog">
+    <h3 id="pinTitle">Admin PIN</h3>
+    <p id="pinWhy">Enter the PIN to open the dashboard.</p>
+    <input class="pin-input" id="pinInput" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="••••" aria-label="PIN">
+    <div class="pin-err" id="pinErr"></div>
+    <div class="btn-row">
+      <button class="btn btn-tonal" id="pinCancel">Cancel</button>
+      <button class="btn btn-filled" id="pinOk">Unlock</button>
     </div>
   </div>
 </div>
 
-<div class="confirm" id="confirm"></div>
+<!-- Edit time dialog -->
+<div class="scrim" id="editScrim" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+  <div class="dialog">
+    <h3 id="editTitle">Edit punch time</h3>
+    <p id="editWho"></p>
+    <div class="field"><label for="editTime">New time</label><input id="editTime" type="time" step="60"></div>
+    <div class="btn-row">
+      <button class="btn btn-danger" id="editDelete">Delete punch</button>
+      <span style="flex:1"></span>
+      <button class="btn btn-tonal" id="editCancel">Cancel</button>
+      <button class="btn btn-filled" id="editSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="snackbar" id="snackbar" role="status"></div>
 
 <script>
-  console.log('🚀 ICAN Attendance App v3.2 (GitHub Pages + CORS Fix)');
+'use strict';
+/* =========================================================
+   ICAN Attendance — GitHub Pages frontend v4.0
+   Sync: POST JSON with Content-Type text/plain (no CORS
+   preflight, which Apps Script cannot answer).
+   ========================================================= */
 
-  let db = null;
-  let isOnline = navigator.onLine;
-  let isSyncing = false;
-  let staffList = [];
-  let scriptUrl = localStorage.getItem('ican_script_url') || '';
+// ---------- state ----------
+var db = null;
+var scriptUrl = localStorage.getItem('ican_script_url') || '';
+var adminPin  = sessionStorage.getItem('ican_pin') || '';   // kept only for this browser session
+var staffList = [];
+var settings  = { lateTime:'08:35', earlyTime:'16:00', kioskTitle:'ICAN Attendance', kioskSubtitle:'Tap your name to sign in or out' };
+var serverPunches = [];      // today's punches already on the sheet
+var isSyncing = false;
+var currentView = 'kiosk';
+var editTarget = null;
+var pinResolve = null;
 
-  async function initDB() {
-    return new Promise((resolve) => {
-      const req = indexedDB.open('ICAN_ATTENDANCE_V3', 1);
-      req.onerror = () => resolve(null);
-      req.onsuccess = () => { db = req.result; resolve(db); };
-      req.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains('punches')) {
-          const s = db.createObjectStore('punches', { keyPath: 'id' });
-          s.createIndex('date', 'date');
-          s.createIndex('name', 'name');
-          s.createIndex('synced', 'synced');
-        }
-        if (!db.objectStoreNames.contains('staff')) db.createObjectStore('staff', { keyPath: 'name' });
-      };
-    });
-  }
+var $ = function(id){ return document.getElementById(id); };
 
-  function uuid() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-      const r = Math.random() * 16 | 0;
-      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-    });
-  }
+// ---------- helpers ----------
+function pad(n){ return ('0'+n).slice(-2); }
+function todayKey(){ var d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function nowTime(){ var d=new Date(); return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds()); }
+function hhmm(t){ return String(t||'').slice(0,5); }
+function initials(name){
+  return String(name).trim().split(/\s+/).slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();
+}
+function esc(s){
+  return String(s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function uuid(){
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){
+    var r=Math.random()*16|0; return (c==='x'?r:(r&3|8)).toString(16);
+  });
+}
 
-  function pad2(x) { return String(x).padStart(2, '0'); }
+// ---------- snackbar ----------
+var snackTimer = null;
+function snack(msg, kind){
+  var el = $('snackbar');
+  el.textContent = msg;
+  el.className = 'snackbar show' + (kind ? ' '+kind : '');
+  clearTimeout(snackTimer);
+  snackTimer = setTimeout(function(){ el.classList.remove('show'); }, 2600);
+}
 
-  function todayKey() {
-    const d = new Date();
-    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
-  }
-
-  function timeString(d = new Date()) {
-    return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
-  }
-
-  // Call Google Apps Script backend
-  async function callGAS(functionName, params = []) {
-    if (!scriptUrl) {
-      console.error('❌ No script URL');
-      return null;
-    }
-
-    try {
-      console.log(`📞 Calling ${functionName}...`);
-      
-      // IMPORTANT: text/plain avoids the CORS preflight that Google Apps Script cannot answer.
-      // The body is still JSON; the backend reads it with JSON.parse(e.postData.contents).
-      const response = await fetch(scriptUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        redirect: 'follow',
-        body: JSON.stringify({ function: functionName, parameters: params })
-      });
-
-      const text = await response.text();
-      const data = JSON.parse(text);
-      console.log(`✅ ${functionName}:`, data);
-      return data;
-    } catch (err) {
-      console.error(`❌ ${functionName}:`, err);
-      return null;
-    }
-  }
-
-  // Sync staff list
-  async function syncStaffList() {
-    console.log('👥 Syncing staff...');
-    const data = await callGAS('getKioskData', []);
-    
-    if (data && Array.isArray(data)) {
-      staffList = data;
-      console.log(`✅ Loaded ${staffList.length} staff`);
-    } else {
-      console.warn('⚠️ Using cached staff');
-      const tx = db.transaction(['staff'], 'readonly');
-      const result = await new Promise(r => {
-        tx.objectStore('staff').getAll().onsuccess = (e) => r(e.target.result);
-      });
-      staffList = result.map(s => s.name) || [];
-    }
-  }
-
-  // Punch
-  async function punch(name, currentAction) {
-    const nextAction = currentAction === 'In' ? 'Out' : 'In';
-    const now = new Date();
-
-    const p = {
-      id: uuid(),
-      name,
-      action: nextAction,
-      date: todayKey(),
-      time: timeString(now),
-      timestamp: now.getTime(),
-      guard: 'KIOSK',
-      synced: false
+// ---------- IndexedDB (offline queue) ----------
+function openDB(){
+  return new Promise(function(resolve){
+    var req = indexedDB.open('ICAN_ATTENDANCE_V4', 1);
+    req.onupgradeneeded = function(e){
+      var d = e.target.result;
+      if(!d.objectStoreNames.contains('punches')){
+        var s = d.createObjectStore('punches',{keyPath:'id'});
+        s.createIndex('date','date'); s.createIndex('synced','syncedFlag');
+      }
     };
+    req.onsuccess = function(){ resolve(req.result); };
+    req.onerror   = function(){ resolve(null); };
+  });
+}
+function dbAll(store){
+  return new Promise(function(resolve){
+    if(!db) return resolve([]);
+    var out = db.transaction([store],'readonly').objectStore(store).getAll();
+    out.onsuccess = function(){ resolve(out.result||[]); };
+    out.onerror   = function(){ resolve([]); };
+  });
+}
+function dbPut(store, obj){
+  return new Promise(function(resolve){
+    if(!db) return resolve(false);
+    var tx = db.transaction([store],'readwrite');
+    tx.objectStore(store).put(obj);
+    tx.oncomplete = function(){ resolve(true); };
+    tx.onerror    = function(){ resolve(false); };
+  });
+}
+function dbDelete(store, key){
+  return new Promise(function(resolve){
+    if(!db) return resolve(false);
+    var tx = db.transaction([store],'readwrite');
+    tx.objectStore(store).delete(key);
+    tx.oncomplete = function(){ resolve(true); };
+    tx.onerror    = function(){ resolve(false); };
+  });
+}
 
-    try {
-      const tx = db.transaction(['punches'], 'readwrite');
-      tx.objectStore('punches').add(p);
-      
-      await new Promise(r => { tx.oncomplete = r; tx.onerror = r; });
-      console.log('✅ Punch saved');
+// ---------- backend calls ----------
+function api(fn, params){
+  if(!scriptUrl) return Promise.resolve(null);
+  return fetch(scriptUrl, {
+    method:'POST',
+    // text/plain = "simple request" → no CORS preflight. Apps Script
+    // still receives the JSON body via e.postData.contents.
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    redirect:'follow',
+    body: JSON.stringify({ function: fn, parameters: params || [] })
+  }).then(function(r){ return r.text(); })
+    .then(function(t){ try{ return JSON.parse(t); }catch(e){ return { ok:false, error:'Bad response from Apps Script (is access set to "Anyone"?)' }; } })
+    .catch(function(e){ console.error(fn, e); return null; });
+}
 
-      document.getElementById('confirm').innerHTML = `<span>${nextAction === 'In' ? '📍' : '🚪'}</span><span><strong>${name}</strong> signed ${nextAction.toLowerCase()}</span>`;
-      document.getElementById('confirm').className = 'confirm show';
-      
-      document.getElementById('search').value = '';
-      render();
-      renderDashboard();
-      setTimeout(() => document.getElementById('confirm').classList.remove('show'), 2200);
+// ---------- sync engine ----------
+function updateSyncPill(state, label){
+  var pill = $('syncPill');
+  pill.className = 'sync-pill ' + state;
+  $('syncTxt').textContent = label;
+}
+function refreshSyncPill(pendingCount){
+  if(!navigator.onLine){ updateSyncPill('offline','Offline — saving locally'); return; }
+  if(isSyncing){ updateSyncPill('syncing','Syncing…'); return; }
+  if(!scriptUrl){ updateSyncPill('offline','Not connected'); return; }
+  updateSyncPill('online', pendingCount ? pendingCount+' pending' : 'Synced');
+}
 
-      if (isOnline) setTimeout(() => syncPunches(), 800);
-    } catch (err) {
-      alert('Error: ' + err);
-    }
-  }
-
-  // Sync punches
-  async function syncPunches() {
-    if (isSyncing || !isOnline || !scriptUrl) return;
-    
-    isSyncing = true;
-    updateSyncStatus();
-
-    try {
-      const tx = db.transaction(['punches'], 'readonly');
-      const unsynced = await new Promise(r => {
-        tx.objectStore('punches').index('synced').getAll(false).onsuccess = (e) => r(e.target.result);
-      });
-
-      if (unsynced.length === 0) {
-        isSyncing = false;
-        updateSyncStatus();
-        return;
-      }
-
-      const result = await callGAS('syncPunches', [unsynced]);
-
-      if (result && result.ok) {
-        const tx2 = db.transaction(['punches'], 'readwrite');
-        unsynced.forEach(p => {
-          p.synced = true;
-          tx2.objectStore('punches').put(p);
+function pushPending(){
+  if(isSyncing || !navigator.onLine || !scriptUrl) return Promise.resolve();
+  isSyncing = true; refreshSyncPill();
+  return dbAll('punches').then(function(all){
+    var pending = all.filter(function(p){ return !p.syncedFlag || p.syncedFlag==='no'; });
+    if(!pending.length){ isSyncing=false; refreshSyncPill(0); return; }
+    return api('syncPunches',[pending]).then(function(res){
+      if(res && res.ok){
+        var chain = Promise.resolve();
+        pending.forEach(function(p){
+          p.syncedFlag='yes';
+          chain = chain.then(function(){ return dbPut('punches',p); });
         });
-        await new Promise(r => { tx2.oncomplete = r; });
-        console.log('✅ Synced');
+        return chain.then(function(){
+          isSyncing=false;
+          return pullToday().then(function(){ refreshSyncPill(0); renderKiosk(); });
+        });
       }
+      isSyncing=false; refreshSyncPill(pending.length);
+      if(res && res.error) console.warn('sync:', res.error);
+    });
+  });
+}
 
-      isSyncing = false;
-      updateSyncStatus();
-    } catch (err) {
-      console.error('❌ Sync error:', err);
-      isSyncing = false;
-      updateSyncStatus();
-    }
+function pullToday(){
+  if(!navigator.onLine || !scriptUrl) return Promise.resolve();
+  return api('getPunchesByDate',[todayKey()]).then(function(res){
+    if(res && res.ok && Array.isArray(res.punches)){ serverPunches = res.punches; }
+  });
+}
+
+// combined view of today's punches (server rows + local not-yet-synced)
+function mergedToday(){
+  return dbAll('punches').then(function(local){
+    var localToday = local.filter(function(p){ return p.date===todayKey(); });
+    var pendingOnly = localToday.filter(function(p){ return p.syncedFlag!=='yes'; });
+    var all = serverPunches.concat(pendingOnly.map(function(p){
+      return { name:p.name, action:p.action, time:p.time, timestamp:p.timestamp, pending:true };
+    }));
+    all.sort(function(a,b){ return String(a.time).localeCompare(String(b.time)); });
+    return all;
+  });
+}
+
+// ---------- kiosk ----------
+function renderKiosk(){
+  var grid = $('staffGrid');
+  if(!scriptUrl){
+    grid.innerHTML = '<div class="empty"><b>Not connected yet</b>Open Settings and paste your Apps Script URL.</div>';
+    $('cntIn').textContent = 0; $('cntOut').textContent = 0;
+    return;
   }
+  if(!staffList.length){
+    grid.innerHTML = '<div class="empty"><b>No staff found</b>Add staff names in column D of the sheet, then refresh.</div>';
+    return;
+  }
+  mergedToday().then(function(today){
+    var lastByName = {};
+    today.forEach(function(p){
+      var prev = lastByName[p.name];
+      if(!prev || String(p.time)>=String(prev.time)) lastByName[p.name]=p;
+    });
 
-  // Render kiosk
-  async function render() {
-    const q = document.getElementById('search').value.toLowerCase();
-    const grid = document.getElementById('grid');
+    var q = $('search').value.trim().toLowerCase();
+    var shown = q ? staffList.filter(function(n){ return n.toLowerCase().indexOf(q)>-1; }) : staffList;
 
-    try {
-      const tx = db.transaction(['punches'], 'readonly');
-      const todayPunches = await new Promise(r => {
-        tx.objectStore('punches').index('date').getAll(todayKey()).onsuccess = (e) => r(e.target.result);
-      });
+    var inCount = 0;
+    staffList.forEach(function(n){
+      var lp = lastByName[n];
+      if(lp && lp.action==='In') inCount++;
+    });
+    $('cntIn').textContent = inCount;
+    $('cntOut').textContent = staffList.length - inCount;
 
-      const byName = {};
-      todayPunches.forEach(p => {
-        if (!byName[p.name]) byName[p.name] = [];
-        byName[p.name].push(p);
-      });
+    if(!shown.length){
+      grid.innerHTML = '<div class="empty"><b>No match</b>Try a different spelling.</div>';
+      return;
+    }
+    grid.innerHTML = shown.map(function(name){
+      var lp = lastByName[name];
+      var isIn = lp && lp.action==='In';
+      var pend = lp && lp.pending;
+      var status = lp ? ((isIn?'In since ':'Out at ')+hhmm(lp.time)) : 'Not signed in';
+      return '<button class="staff-card'+(isIn?' in':'')+(pend?' pending':'')+'" data-name="'+esc(name)+'" data-state="'+(isIn?'In':'Out')+'">'
+        + '<span class="avatar">'+esc(initials(name))+'</span>'
+        + '<span class="nm">'+esc(name)+'</span>'
+        + '<span class="st">'+esc(status)+'</span>'
+        + '</button>';
+    }).join('');
+  });
+}
 
-      let shown = staffList;
-      if (q) shown = staffList.filter(s => s.toLowerCase().includes(q));
+function punch(name, currentState){
+  var action = currentState==='In' ? 'Out' : 'In';
+  var rec = {
+    id: uuid(), name:name, action:action,
+    date: todayKey(), time: nowTime(),
+    timestamp: Date.now(), guard:'KIOSK', syncedFlag:'no'
+  };
+  dbPut('punches',rec).then(function(){
+    snack((action==='In'?'📍 ':'🚪 ')+name+' signed '+action.toLowerCase()+' · '+hhmm(rec.time), action==='In'?'good':'');
+    $('search').value='';
+    renderKiosk();
+    pushPending();
+  });
+}
 
-      if (!shown.length) {
-        grid.innerHTML = '<div class="empty">👥 No staff</div>';
-        return;
+// ---------- clock ----------
+function tickClock(){
+  var d = new Date();
+  $('clockTime').textContent = pad(d.getHours())+':'+pad(d.getMinutes());
+  $('clockDate').textContent = d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+}
+
+// ---------- PIN ----------
+function askPin(reason){
+  return new Promise(function(resolve){
+    pinResolve = resolve;
+    $('pinWhy').textContent = reason || 'Enter the admin PIN.';
+    $('pinErr').textContent = '';
+    $('pinInput').value = '';
+    $('pinScrim').classList.add('show');
+    setTimeout(function(){ $('pinInput').focus(); }, 60);
+  });
+}
+function closePin(ok){
+  $('pinScrim').classList.remove('show');
+  if(pinResolve){ pinResolve(ok); pinResolve=null; }
+}
+function submitPin(){
+  var val = $('pinInput').value.trim();
+  if(!val){ $('pinErr').textContent='Enter the PIN'; return; }
+  $('pinErr').textContent='Checking…';
+  api('verifyPin',[val]).then(function(res){
+    if(res && res.ok){
+      adminPin = val;
+      sessionStorage.setItem('ican_pin', val);
+      closePin(true);
+    } else {
+      $('pinErr').textContent = (res && res.error) ? res.error : 'Wrong PIN';
+      $('pinInput').value=''; $('pinInput').focus();
+    }
+  });
+}
+function ensurePin(reason){
+  if(adminPin) return Promise.resolve(true);
+  return askPin(reason);
+}
+
+// ---------- dashboard ----------
+function firstInPerStaff(punches){
+  var first = {};
+  punches.slice().sort(function(a,b){ return String(a.time).localeCompare(String(b.time)); })
+    .forEach(function(p){ if(p.action==='In' && !first[p.name]) first[p.name]=p; });
+  return first;
+}
+function loadDashboard(){
+  var date = $('dashDate').value || todayKey();
+  $('dashRows').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--on-surface-var);padding:34px">Loading…</td></tr>';
+  api('getDashboard',[adminPin, date]).then(function(res){
+    if(!res || !res.ok){
+      var msg = res && res.error ? res.error : 'Could not reach Apps Script';
+      $('dashRows').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--error);padding:34px">'+esc(msg)+'</td></tr>';
+      if(res && /PIN/i.test(String(res.error||''))){ adminPin=''; sessionStorage.removeItem('ican_pin'); }
+      return;
+    }
+    if(res.settings) applySettings(res.settings);
+    var punches = res.punches || [];
+    var staff = res.staff || staffList;
+
+    // stats
+    var lastByName = {};
+    punches.forEach(function(p){
+      var prev = lastByName[p.name];
+      if(!prev || String(p.time)>=String(prev.time)) lastByName[p.name]=p;
+    });
+    var present = 0;
+    Object.keys(lastByName).forEach(function(n){ if(lastByName[n].action==='In') present++; });
+    var firsts = firstInPerStaff(punches);
+    var late = 0;
+    Object.keys(firsts).forEach(function(n){
+      if(hhmm(firsts[n].time) > settings.lateTime) late++;
+    });
+    $('stPresent').textContent = present;
+    $('stOut').textContent = Math.max(staff.length - present, 0);
+    $('stLate').textContent = late;
+    $('stTotal').textContent = punches.length;
+
+    // rows (newest first)
+    if(!punches.length){
+      $('dashRows').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--on-surface-var);padding:34px">No punches on '+esc(date)+'</td></tr>';
+      return;
+    }
+    var rows = punches.slice().sort(function(a,b){ return String(b.time).localeCompare(String(a.time)); });
+    $('dashRows').innerHTML = rows.map(function(p){
+      var isLate = p.action==='In' && firsts[p.name]===p && hhmm(p.time) > settings.lateTime;
+      var chip = p.action==='In'
+        ? '<span class="chip in">In</span>'+(isLate?' <span class="chip late">Late</span>':'')
+        : '<span class="chip out">Out</span>';
+      return '<tr>'
+        + '<td><b>'+esc(p.name)+'</b></td>'
+        + '<td>'+chip+'</td>'
+        + '<td>'+esc(hhmm(p.time))+'</td>'
+        + '<td>'+esc(p.guard||'')+'</td>'
+        + '<td><button class="icon-btn" data-edit="'+p.row+'" data-name="'+esc(p.name)+'" data-action="'+esc(p.action)+'" data-time="'+esc(p.time)+'" aria-label="Edit">✏️</button></td>'
+        + '</tr>';
+    }).join('');
+  });
+}
+
+function openEdit(btn){
+  editTarget = {
+    row: Number(btn.getAttribute('data-edit')),
+    name: btn.getAttribute('data-name'),
+    action: btn.getAttribute('data-action'),
+    time: btn.getAttribute('data-time')
+  };
+  $('editWho').textContent = editTarget.name+' — '+editTarget.action+' at '+hhmm(editTarget.time);
+  $('editTime').value = hhmm(editTarget.time);
+  $('editScrim').classList.add('show');
+}
+function closeEdit(){ $('editScrim').classList.remove('show'); editTarget=null; }
+function saveEdit(){
+  if(!editTarget) return;
+  var t = $('editTime').value;
+  if(!t){ snack('Pick a time','bad'); return; }
+  api('updatePunchTime',[adminPin, editTarget.row, t]).then(function(res){
+    if(res && res.ok){ snack('Time updated','good'); closeEdit(); loadDashboard(); pullToday().then(renderKiosk); }
+    else snack((res&&res.error)||'Update failed','bad');
+  });
+}
+function deleteEdit(){
+  if(!editTarget) return;
+  if(!confirm('Delete this punch for '+editTarget.name+'?')) return;
+  api('deletePunch',[adminPin, editTarget.row]).then(function(res){
+    if(res && res.ok){ snack('Punch deleted','good'); closeEdit(); loadDashboard(); pullToday().then(renderKiosk); }
+    else snack((res&&res.error)||'Delete failed','bad');
+  });
+}
+
+// ---------- settings ----------
+function applySettings(s){
+  for(var k in settings){ if(s && s[k]) settings[k]=s[k]; }
+  $('brandTitle').textContent = settings.kioskTitle;
+  $('brandSub').textContent = settings.kioskSubtitle;
+  document.title = settings.kioskTitle;
+  $('setTitle').value = settings.kioskTitle;
+  $('setSubtitle').value = settings.kioskSubtitle;
+  $('setLate').value = hhmm(settings.lateTime);
+  $('setEarly').value = hhmm(settings.earlyTime);
+}
+function showNote(id, kind, msg){
+  var n = $(id); n.className='note show '+kind; n.innerHTML = msg;
+}
+function saveUrl(){
+  var url = $('scriptUrl').value.trim();
+  if(!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)){
+    showNote('connNote','err','That doesn\u2019t look like a deployment URL. It should start with <b>https://script.google.com/</b> and end with <b>/exec</b>.');
+    return;
+  }
+  localStorage.setItem('ican_script_url', url);
+  scriptUrl = url;
+  showNote('connNote','info','Testing connection…');
+  api('getKioskData',[]).then(function(res){
+    if(res && res.ok){
+      staffList = res.staff||[];
+      applySettings(res.settings);
+      showNote('connNote','ok','✅ Connected — found '+staffList.length+' staff. You\u2019re ready to go.');
+      refreshSyncPill(0);
+      pullToday().then(renderKiosk);
+    } else {
+      var extra = res && res.error ? esc(res.error) : 'No response';
+      showNote('connNote','err','❌ Could not connect: '+extra+'.<br>Check that the deployment has <b>Who has access: Anyone</b>, and open <b>your-url/exec?action=debug</b> in a new tab to see details.');
+    }
+  });
+}
+function saveOptions(){
+  ensurePin('Enter the PIN to change kiosk options.').then(function(ok){
+    if(!ok) return;
+    var s = {
+      kioskTitle: $('setTitle').value.trim(),
+      kioskSubtitle: $('setSubtitle').value.trim(),
+      lateTime: $('setLate').value,
+      earlyTime: $('setEarly').value
+    };
+    api('saveSettings',[adminPin, s]).then(function(res){
+      if(res && res.ok){ applySettings(res.settings); showNote('setNote','ok','✅ Saved — options apply on every device.'); }
+      else{
+        showNote('setNote','err','❌ '+((res&&res.error)||'Save failed'));
+        if(res && /PIN/i.test(String(res.error||''))){ adminPin=''; sessionStorage.removeItem('ican_pin'); }
       }
+    });
+  });
+}
+function clearLocal(){
+  if(!confirm('Clear local data on this device? Anything already synced stays safe in the sheet.')) return;
+  if(db){ db.close(); db=null; }
+  var req = indexedDB.deleteDatabase('ICAN_ATTENDANCE_V4');
+  req.onsuccess = req.onerror = req.onblocked = function(){
+    openDB().then(function(d){ db=d; showNote('devNote','ok','✅ Local data cleared.'); renderKiosk(); });
+  };
+}
 
-      grid.innerHTML = shown.map(name => {
-        const ps = byName[name] || [];
-        const last = ps.length ? ps[ps.length - 1].action : 'Out';
-        const isIn = last === 'In';
-
-        return `<button class="staff-btn ${isIn ? 'in' : ''}" onclick="punch('${name}', '${last}')">
-          <div class="name">${name}</div>
-          <div class="status-badge"><span class="status-dot"></span><span>${isIn ? 'Signed in' : 'Signed out'}</span></div>
-        </button>`;
-      }).join('');
-    } catch (err) {
-      grid.innerHTML = '<div class="empty">❌ Error</div>';
-    }
+// ---------- navigation ----------
+function setView(name){
+  if(name==='dashboard'){
+    ensurePin('Enter the PIN to open the dashboard.').then(function(ok){
+      if(ok) reallySetView('dashboard');
+    });
+    return;
   }
+  reallySetView(name);
+}
+function reallySetView(name){
+  currentView = name;
+  ['kiosk','dashboard','settings'].forEach(function(v){
+    $('view-'+v).classList.toggle('active', v===name);
+  });
+  document.querySelectorAll('[data-nav]').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-nav')===name);
+  });
+  if(name==='dashboard'){ $('dashDate').value = $('dashDate').value || todayKey(); loadDashboard(); }
+  if(name==='settings'){ $('scriptUrl').value = scriptUrl; }
+  if(name==='kiosk'){ renderKiosk(); }
+}
 
-  // Render dashboard
-  async function renderDashboard() {
-    const content = document.getElementById('dashboardContent');
+// ---------- boot ----------
+function boot(){
+  openDB().then(function(d){
+    db = d;
+    tickClock(); setInterval(tickClock, 15000);
 
-    try {
-      const tx = db.transaction(['punches'], 'readonly');
-      const allPunches = await new Promise(r => {
-        tx.objectStore('punches').getAll().onsuccess = (e) => r(e.target.result);
+    // events — delegation (safe for names with quotes)
+    $('staffGrid').addEventListener('click', function(e){
+      var card = e.target.closest('.staff-card');
+      if(card) punch(card.getAttribute('data-name'), card.getAttribute('data-state'));
+    });
+    $('search').addEventListener('input', renderKiosk);
+    document.querySelectorAll('[data-nav]').forEach(function(b){
+      b.addEventListener('click', function(){ setView(b.getAttribute('data-nav')); });
+    });
+    $('dashRefresh').addEventListener('click', loadDashboard);
+    $('dashDate').addEventListener('change', loadDashboard);
+    $('dashLock').addEventListener('click', function(){
+      adminPin=''; sessionStorage.removeItem('ican_pin'); reallySetView('kiosk'); snack('Dashboard locked');
+    });
+    $('dashRows').addEventListener('click', function(e){
+      var btn = e.target.closest('[data-edit]'); if(btn) openEdit(btn);
+    });
+    $('pinOk').addEventListener('click', submitPin);
+    $('pinCancel').addEventListener('click', function(){ closePin(false); });
+    $('pinInput').addEventListener('keydown', function(e){ if(e.key==='Enter') submitPin(); });
+    $('pinScrim').addEventListener('click', function(e){ if(e.target===this) closePin(false); });
+    $('editSave').addEventListener('click', saveEdit);
+    $('editCancel').addEventListener('click', closeEdit);
+    $('editDelete').addEventListener('click', deleteEdit);
+    $('editScrim').addEventListener('click', function(e){ if(e.target===this) closeEdit(); });
+    $('btnSaveUrl').addEventListener('click', saveUrl);
+    $('btnSaveSettings').addEventListener('click', saveOptions);
+    $('btnForceSync').addEventListener('click', function(){
+      showNote('devNote','info','Syncing…');
+      pushPending().then(function(){ showNote('devNote','ok','✅ Sync finished.'); });
+    });
+    $('btnClear').addEventListener('click', clearLocal);
+    window.addEventListener('online',  function(){ refreshSyncPill(); pushPending(); });
+    window.addEventListener('offline', function(){ refreshSyncPill(); });
+
+    // load data
+    if(scriptUrl){
+      refreshSyncPill();
+      api('getKioskData',[]).then(function(res){
+        if(res && res.ok){
+          staffList = res.staff||[];
+          applySettings(res.settings);
+        }
+        return pullToday();
+      }).then(function(){
+        renderKiosk();
+        pushPending();
       });
-
-      const todayPunches = allPunches.filter(p => p.date === todayKey());
-      const uniqueNames = [...new Set(todayPunches.map(p => p.name))];
-      const signedIn = uniqueNames.filter(name => {
-        const ps = todayPunches.filter(p => p.name === name);
-        return ps.length && ps[ps.length - 1].action === 'In';
-      });
-
-      content.innerHTML = `
-        <div class="card"><h3>Total</h3><div class="value">${todayPunches.length}</div></div>
-        <div class="card"><h3>Signed In</h3><div class="value" style="color: var(--in-color);">${signedIn.length}</div></div>
-        <div class="card"><h3>Signed Out</h3><div class="value">${uniqueNames.length - signedIn.length}</div></div>
-        <div style="grid-column: 1 / -1;" class="card">
-          <h3>Today's Activity</h3>
-          <table class="table"><thead><tr><th>Name</th><th>Action</th><th>Time</th></tr></thead>
-          <tbody>${todayPunches.sort((a, b) => b.timestamp - a.timestamp).map(p => `
-            <tr><td>${p.name}</td><td>${p.action}</td><td>${p.time.slice(0, 5)}</td></tr>
-          `).join('')}</tbody></table>
-        </div>
-      `;
-    } catch (err) {
-      content.innerHTML = '<div class="empty">❌ Error</div>';
-    }
-  }
-
-  // Settings
-  function saveScriptUrl() {
-    const url = document.getElementById('scriptUrl').value.trim();
-    if (!url) { alert('Enter URL'); return; }
-    localStorage.setItem('ican_script_url', url);
-    scriptUrl = url;
-    document.getElementById('urlStatus').textContent = '✅ Saved! Testing...';
-    testConnection();
-  }
-
-  async function testConnection() {
-    const status = document.getElementById('urlStatus');
-    status.textContent = '⏳ Testing...';
-    
-    const result = await callGAS('getKioskData', []);
-    
-    if (result && Array.isArray(result)) {
-      status.textContent = `✅ Connected! Loaded ${result.length} staff`;
-      setTimeout(() => location.reload(), 1500);
+      setInterval(function(){ pushPending(); }, 60000);
+      setInterval(function(){ pullToday().then(function(){ if(currentView==='kiosk') renderKiosk(); }); }, 120000);
     } else {
-      status.textContent = '❌ Connection failed. Check URL and console (F12)';
+      updateSyncPill('offline','Not connected');
+      renderKiosk();
+      reallySetView('settings');
     }
-  }
-
-  // View switching
-  function switchView(view) {
-    document.getElementById('kioskView').classList.add('hidden');
-    document.getElementById('dashboardView').classList.add('hidden');
-    document.getElementById('settingsView').classList.add('hidden');
-
-    if (view === 'kiosk') {
-      document.getElementById('kioskView').classList.remove('hidden');
-      render();
-    } else if (view === 'dashboard') {
-      document.getElementById('dashboardView').classList.remove('hidden');
-      renderDashboard();
-    } else if (view === 'settings') {
-      document.getElementById('settingsView').classList.remove('hidden');
-      document.getElementById('scriptUrl').value = scriptUrl;
-    }
-  }
-
-  function updateSyncStatus() {
-    const dot = document.getElementById('syncDot');
-    const text = document.getElementById('syncText');
-
-    if (!isOnline) {
-      dot.className = 'sync-dot';
-      text.textContent = 'Offline';
-    } else if (isSyncing) {
-      dot.className = 'sync-dot syncing';
-      text.textContent = 'Syncing…';
-    } else {
-      dot.className = 'sync-dot online';
-      text.textContent = 'Online';
-    }
-  }
-
-  // Init
-  async function init() {
-    console.log('📦 Starting...');
-    await initDB();
-    scriptUrl = localStorage.getItem('ican_script_url') || '';
-    
-    document.getElementById('search').addEventListener('input', render);
-    window.addEventListener('online', () => { isOnline = true; updateSyncStatus(); syncPunches(); });
-    window.addEventListener('offline', () => { isOnline = false; updateSyncStatus(); });
-
-    if (scriptUrl) {
-      await syncStaffList();
-      render();
-      updateSyncStatus();
-      syncPunches();
-      setInterval(() => { if (isOnline && !isSyncing) syncPunches(); }, 60000);
-    } else {
-      switchView('settings');
-    }
-
-    console.log('✅ Ready');
-  }
-
-  window.punch = punch;
-  window.switchView = switchView;
-  window.saveScriptUrl = saveScriptUrl;
-  window.testConnection = testConnection;
-
-  init();
+  });
+}
+document.addEventListener('DOMContentLoaded', boot);
 </script>
 </body>
 </html>
