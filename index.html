@@ -464,9 +464,12 @@
     try {
       console.log(`📞 Calling ${functionName}...`);
       
+      // IMPORTANT: text/plain avoids the CORS preflight that Google Apps Script cannot answer.
+      // The body is still JSON; the backend reads it with JSON.parse(e.postData.contents).
       const response = await fetch(scriptUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        redirect: 'follow',
         body: JSON.stringify({ function: functionName, parameters: params })
       });
 
