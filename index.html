@@ -406,7 +406,8 @@ tr:last-child td{border-bottom:none}
 
 // ---------- state ----------
 var db = null;
-var scriptUrl = localStorage.getItem('ican_script_url') || '';
+var DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjaPXIKwnHMWf-nby-opBbf9-_bDnbxNa3okI3_fweJw-6uMkDYTDZfxTSSx90E1Rq/exec';
+var scriptUrl = localStorage.getItem('ican_script_url') || DEFAULT_SCRIPT_URL;
 var adminPin  = sessionStorage.getItem('ican_pin') || '';   // kept only for this browser session
 var staffList = [];
 var settings  = { lateTime:'08:35', earlyTime:'16:00', kioskTitle:'ICAN Attendance', kioskSubtitle:'Tap your name to sign in or out' };
